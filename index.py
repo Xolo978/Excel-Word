@@ -1,6 +1,6 @@
 from docx import Document
 import pandas as pd
-from tkinter import Tk, filedialog
+from tkinter import Tk, filedialog, messagebox, Button, Label, Radiobutton, StringVar, OptionMenu
 
 def write_multiple_docx(data, index, save_path):
     doc = Document()
@@ -17,12 +17,12 @@ def write_single_docx(data, doc):
     return doc
 
 def process_files(path, save_path, option):
-    if option == '1':
+    if option == 'Multiple Documents':
         d = pd.read_excel(path)
         for index, row in d.iterrows():
             data = row.to_dict()
             write_multiple_docx(data, index, save_path)
-    elif option == '2':
+    elif option == 'Single Document':
         single_doc = Document()
         d = pd.read_excel(path)
         for index, row in d.iterrows():
@@ -31,39 +31,55 @@ def process_files(path, save_path, option):
         single_doc.save(f"{save_path}/SingleDocument.docx")
         print("Single Document created successfully")
 
-def main():
-    root = Tk()
-    print("1. Select the Excel file")
-    print("2. Exit")
-    choice = int(input("Enter your choice: "))
-    
-    if choice == 1:
-        file_path = filedialog.askopenfilename(
-            title="Select an Excel file",
-            filetypes=[("Excel files", "*.xlsx")]
-        )
-        if file_path:
-            save_path = filedialog.askdirectory(title="Select the folder to save the documents")
-            if save_path:
-                print("1. Generate multiple documents")
-                print("2. Generate a single document")
-                option = input("Enter your choice (1/2): ")
-                if option in ['1', '2']:
-                    process_files(file_path, save_path, option)
-                else:
-                    print("Invalid option. Please enter 1 or 2.")
-            else:
-                print("No folder selected")
-        else:
-            print("No file selected")
-            
-    elif choice == 2:
-        print("Exiting...")
-        exit()
+def select_file():
+    file_path = filedialog.askopenfilename(
+        title="Select an Excel file",
+        filetypes=[("Excel files", "*.xlsx")]
+    )
+    if file_path:
+        file_var.set(file_path)
+
+def select_folder():
+    folder_path = filedialog.askdirectory(title="Select the folder to save the documents")
+    if folder_path:
+        folder_var.set(folder_path)
+
+def process():
+    file_path = file_var.get()
+    print(file_path)
+    save_path = folder_var.get()
+    print(save_path)
+    option = option_var.get()
+    if file_path and save_path and option:
+        process_files(file_path, save_path, option)
     else:
-        print("Invalid choice. Please enter 1 or 2.")
-    
-    root.destroy()  # Close the Tkinter window after use
+        messagebox.showwarning("Warning", "Please complete all selections.")
+
+def main():
+    global file_var, folder_var, option_var
+
+    root = Tk()
+    root.title("Document Generator")
+
+    file_var = StringVar()
+    folder_var = StringVar()
+    option_var = StringVar(value='Multiple Documents')
+
+    Label(root, text="Select Excel File:").pack()
+    Button(root, text="Browse", command=select_file).pack()
+    Label(root, textvariable=file_var).pack()
+
+    Label(root, text="Select Save Folder:").pack()
+    Button(root, text="Browse", command=select_folder).pack()
+    Label(root, textvariable=folder_var).pack()
+
+    Label(root, text="Select Document Type:").pack()
+    Radiobutton(root, text="Multiple Documents", variable=option_var, value='Multiple Documents').pack()
+    Radiobutton(root, text="Single Document", variable=option_var, value='Single Document').pack()
+
+    Button(root, text="Generate Documents", command=process).pack()
+
+    root.mainloop()
 
 if __name__ == "__main__":
     main()
